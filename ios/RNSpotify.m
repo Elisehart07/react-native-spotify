@@ -19,7 +19,8 @@
 	BOOL _loggingIn;
 	BOOL _loggingInPlayer;
 	BOOL _loggingOutPlayer;
-	
+
+
 	SPTAuth* _auth;
 	SPTAudioStreamingController* _player;
 	
@@ -34,19 +35,37 @@
 	
 	NSString* _audioSessionCategory;
 }
+
++(RNSpotify *) sharedInstance;
 +(NSMutableDictionary*)mutableDictFromDict:(NSDictionary*)dict;
+
 -(BOOL)hasPlayerScope;
 
 -(void)logBackInIfNeeded:(RNSpotifyCompletion*)completion waitForDefinitiveResponse:(BOOL)waitForDefinitiveResponse;
 -(void)initializePlayerIfNeeded:(RNSpotifyCompletion*)completion;
 -(void)loginPlayer:(RNSpotifyCompletion*)completion;
 -(void)logoutPlayer:(RNSpotifyCompletion*)completion;
+
+
 -(void)prepareForPlayer:(RNSpotifyCompletion*)completion;
 -(void)prepareForRequest:(RNSpotifyCompletion*)completion;
 -(void)doAPIRequest:(NSString*)endpoint method:(NSString*)method params:(NSDictionary*)params jsonBody:(BOOL)jsonBody completion:(RNSpotifyCompletion*)completion;
 @end
 
 @implementation RNSpotify
+
+static RNSpotify *sharedInstance = nil;
+
+
++ (RNSpotify *)sharedInstance
+{
+    @synchronized(self) {
+        if (sharedInstance == nil) {
+            sharedInstance = [[self alloc] init];
+        }
+    }
+    return sharedInstance;
+}
 
 @synthesize bridge = _bridge;
 
@@ -64,7 +83,7 @@
 		
 		_options = nil;
 		_cacheSize = nil;
-		
+        
 		_loginPlayerResponses = [NSMutableArray array];
 		_logoutPlayerResponses = [NSMutableArray array];
 		
@@ -191,7 +210,7 @@ RCT_EXPORT_METHOD(initialize:(NSDictionary*)options resolve:(RCTPromiseResolveBl
 	_auth = [SPTAuth defaultInstance];
 	_player = [SPTAudioStreamingController sharedInstance];
 	_cacheSize = @(1024 * 1024 * 64);
-	
+
 	// load auth options
 	_auth.clientID = options[@"clientID"];
 	_auth.redirectURL = [NSURL URLWithString:options[@"redirectURL"]];
@@ -520,50 +539,62 @@ RCT_EXPORT_METHOD(login:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseReject
 	}
 	_loggingIn = YES;
 	// do UI logic on main thread
-	dispatch_async(dispatch_get_main_queue(), ^{
-		RNSpotifyAuthController* authController = [[RNSpotifyAuthController alloc] initWithAuth:_auth];
-		
-		__weak RNSpotifyAuthController* weakAuthController = authController;
-		authController.completion = [RNSpotifyCompletion<NSNumber*> onReject:^(RNSpotifyError* error) {
-			// login failed
-			RNSpotifyAuthController* authController = weakAuthController;
-			[authController.presentingViewController dismissViewControllerAnimated:YES completion:^{
-				_loggingIn = NO;
-				[error reject:reject];
-			}];
-		} onResolve:^(NSNumber* authenticated) {
-			RNSpotifyAuthController* authController = weakAuthController;
-			if(!authenticated.boolValue)
-			{
-				// login cancelled
-				[authController.presentingViewController dismissViewControllerAnimated:YES completion:^{
-					_loggingIn = NO;
-					resolve(@NO);
-				}];
-			}
-			else
-			{
-				// login successful
-				[self initializePlayerIfNeeded:[RNSpotifyCompletion onComplete:^(id unused, RNSpotifyError* unusedError) {
-					// do UI logic on main thread
-					dispatch_async(dispatch_get_main_queue(), ^{
-						[authController.presentingViewController dismissViewControllerAnimated:YES completion:^{
-							_loggingIn = NO;
-							NSNumber* loggedIn = [self isLoggedIn];
-							resolve(loggedIn);
-							if(loggedIn.boolValue)
-							{
-								[self sendEvent:@"login" args:@[]];
-							}
-						}];
-					});
-				}]];
-			}
-		}];
-		
-		// present auth view controller
-		UIViewController* topViewController = [RNSpotifyAuthController topViewController];
-		[topViewController presentViewController:authController animated:YES completion:nil];
+	dispatch_async(dispatch_get_main_queue(), ^{    
+         if ([SPTAuth supportsApplicationAuthentication]) {
+
+            //open spotiyf
+            [[RNSpotifyAuthController alloc] initWithAuthApp:_auth];
+
+            RNSpotify *spotifyModule = (RNSpotify *)[RNSpotify sharedInstance];
+
+            spotifyModule.loginCallbackResolve = resolve;
+
+
+        } else {
+            RNSpotifyAuthController* authController = [[RNSpotifyAuthController alloc] initWithAuthWeb:_auth];
+
+            __weak RNSpotifyAuthController* weakAuthController = authController;
+            authController.completion = [RNSpotifyCompletion<NSNumber*> onReject:^(RNSpotifyError* error) {
+                // login failed
+                RNSpotifyAuthController* authController = weakAuthController;
+                [authController.presentingViewController dismissViewControllerAnimated:YES completion:^{
+                    _loggingIn = NO;
+                    [error reject:reject];
+                }];
+            } onResolve:^(NSNumber* authenticated) {
+                RNSpotifyAuthController* authController = weakAuthController;
+                if(!authenticated.boolValue)
+                {
+                    // login cancelled
+                    [authController.presentingViewController dismissViewControllerAnimated:YES completion:^{
+                        _loggingIn = NO;
+                        resolve(@NO);
+                    }];
+                }
+                else
+                {
+                    // login successful
+                    [self initializePlayerIfNeeded:[RNSpotifyCompletion onComplete:^(id unused, RNSpotifyError* unusedError) {
+                        // do UI logic on main thread
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [authController.presentingViewController dismissViewControllerAnimated:YES completion:^{
+                                _loggingIn = NO;
+                                NSNumber* loggedIn = [self isLoggedIn];
+                                resolve(loggedIn);
+                                if(loggedIn.boolValue)
+                                {
+                                    [self sendEvent:@"login" args:@[]];
+                                }
+                            }];
+                        });
+                    }]];
+                }
+            }];
+            
+            // present auth view controller
+            UIViewController* topViewController = [RNSpotifyAuthController topViewController];
+            [topViewController presentViewController:authController animated:YES completion:nil];
+        }
 	});
 }
 

@@ -14,7 +14,8 @@ typedef void(^RNSpotifyAuthCallback)(BOOL authenticated, NSError* error);
 
 @interface RNSpotifyAuthController : UINavigationController
 
--(id)initWithAuth:(SPTAuth*)auth;
+-(id)initWithAuthWeb:(SPTAuth*)auth;
+-(id)initWithAuthApp:(SPTAuth*)auth;
 
 -(void)clearCookies:(void(^)())completion;
 

@@ -22,6 +22,37 @@ Next, do the manual setup for each platform:
 #### iOS
 Manually add the frameworks from `node_modules/rn-spotify-sdk/ios/external/SpotifySDK` to *Linked Frameworks and Libraries* in your project settings. Then add `../node_modules/rn-spotify-sdk/ios/external/SpotifySDK` to *Framework Search Paths* in your project settings.
 
+Allow spotify to authenticate within the spotify app you need to add 'spotify-action' to LSApplicationQuerySchemes
+also edit AppDelegate.m to allow this
+
+```- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+
+    NSString * scheme = (NSString*)url.scheme;
+    NSString * fbScheme = @"fb1545227645724628";
+  
+    if([[SPTAuth defaultInstance] canHandleURL:url]) {
+          [[SPTAuth defaultInstance] handleAuthCallbackWithTriggeredAuthURL:url callback:^(NSError *error, SPTSession *session) {
+            // If anything failed, logs the error then returns
+            
+            RNSpotify *spotifyModule = (RNSpotify *)[RNSpotify sharedInstance];
+            
+            if (error != nil) {
+              NSLog(@"*** Auth error: %@", error);
+              spotifyModule.loginCallbackResolve(@NO);
+              return;
+            }
+            
+            NSLog(@"*** Auth success: ");
+            spotifyModule.loginCallbackResolve(@YES);
+            
+          }];
+        return YES;
+    } else {
+        return [RCTLinkingManager application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
+    }
+}
+```
+
 #### Android
 
 Edit `android/build.gradle` and add `flatDir`

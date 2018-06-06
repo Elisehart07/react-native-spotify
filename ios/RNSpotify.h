@@ -13,6 +13,13 @@
 
 @interface RNSpotify : NSObject <RCTBridgeModule, RNEventConformer>
 
+
+@property (nonatomic, copy) RCTPromiseResolveBlock loginCallbackResolve;
+@property (nonatomic, copy) RCTPromiseRejectBlock loginCallbackReject;
+
++ (RNSpotify *) sharedInstance;
+
+
 //test()
 -(id)test;
 

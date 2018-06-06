@@ -31,28 +31,46 @@
 	return topController;
 }
 
--(id)initWithAuth:(SPTAuth*)auth
+-(id)initWithAuthWeb:(SPTAuth*)auth
 {
-	RNSpotifyWebViewController* rootController = [[RNSpotifyWebViewController alloc] init];
-	if(self = [super initWithRootViewController:rootController])
-	{
-		_auth = auth;
-		_webController = rootController;
-		_progressView = [[RNSpotifyProgressView alloc] init];
-		
-		self.navigationBar.barTintColor = [UIColor blackColor];
-		self.navigationBar.tintColor = [UIColor whiteColor];
-		self.navigationBar.titleTextAttributes = @{NSForegroundColorAttributeName : [UIColor whiteColor]};
-		self.view.backgroundColor = [UIColor whiteColor];
-		self.modalPresentationStyle = UIModalPresentationFormSheet;
-		
-		_webController.webView.delegate = self;
-		//_webController.title = @"Log into Spotify";
-		_webController.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didSelectCancelButton)];
-		
-		NSURLRequest* request = [NSURLRequest requestWithURL:_auth.spotifyWebAuthenticationURL];
-		[_webController.webView loadRequest:request];
-	}
+    _auth = auth;
+
+    RNSpotifyWebViewController* rootController = [[RNSpotifyWebViewController alloc] init];
+    if(self = [super initWithRootViewController:rootController])
+    {
+    
+        _webController = rootController;
+        _progressView = [[RNSpotifyProgressView alloc] init];
+        
+        self.navigationBar.barTintColor = [UIColor blackColor];
+        self.navigationBar.tintColor = [UIColor whiteColor];
+        self.navigationBar.titleTextAttributes = @{NSForegroundColorAttributeName : [UIColor whiteColor]};
+        self.view.backgroundColor = [UIColor whiteColor];
+        self.modalPresentationStyle = UIModalPresentationFormSheet;
+        
+        _webController.webView.delegate = self;
+        //_webController.title = @"Log into Spotify";
+        _webController.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didSelectCancelButton)];
+    
+        NSURLRequest* request = [NSURLRequest requestWithURL:_auth.spotifyWebAuthenticationURL];
+        [_webController.webView loadRequest:request];
+    }
+    
+
+	return self;
+}
+
+-(id)initWithAuthApp:(SPTAuth*)auth
+{
+    _auth = auth;
+    
+    UIApplication *application = [UIApplication sharedApplication];
+    [application openURL:_auth.spotifyAppAuthenticationURL options:@{} completionHandler:^(BOOL success) {
+        if (success) {
+            NSLog(@"Opened %@",_auth.spotifyAppAuthenticationURL);
+        }
+    }];
+
 	return self;
 }
 
