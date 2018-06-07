@@ -1,7 +1,6 @@
 
-import Queue from './src/Queue';
-import Spotify from './src/Spotify';
+import { NativeModules } from 'react-native';
 
-Spotify.queue = Queue;
+const Spotify = NativeModules.RNSpotify;
 
 export default Spotify;
