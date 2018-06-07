@@ -2,14 +2,13 @@
 #import "RNSpotify.h"
 #import <AVFoundation/AVFoundation.h>
 #import <SpotifyAuthentication/SpotifyAuthentication.h>
-#import <SpotifyAudioPlayback/SpotifyAudioPlayback.h>
 #import "RNSpotifyAuthController.h"
 #import "RNSpotifyProgressView.h"
 #import "RNSpotifyConvert.h"
 #import "RNSpotifyCompletion.h"
 #import "HelperMacros.h"
 
-@interface RNSpotify() <SPTAudioStreamingDelegate, SPTAudioStreamingPlaybackDelegate>
+@interface RNSpotify() 
 {
 	BOOL _initialized;
 
