@@ -298,46 +298,23 @@ RCT_EXPORT_METHOD(login:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseReject
 		[[RNSpotifyError errorWithCodeObj:RNSpotifyErrorCode.ConflictingCallbacks message:@"Cannot call login multiple times before completing"] reject:reject];
 		return;
 	}
-	_loggingIn = YES;
+	_loggingIn = YES;   
+
+    RNSpotify *spotifyModule = (RNSpotify *)[RNSpotify sharedInstance];
 	// do UI logic on main thread
 	dispatch_async(dispatch_get_main_queue(), ^{    
+        
+        RNSpotify *spotifyModule = (RNSpotify *)[RNSpotify sharedInstance];
+        spotifyModule.loginCallbackResolve = resolve;
+
          if ([SPTAuth supportsApplicationAuthentication]) {
 
             //open spotiyf
             [[RNSpotifyAuthController alloc] initWithAuthApp:_auth];
-
-            RNSpotify *spotifyModule = (RNSpotify *)[RNSpotify sharedInstance];
-
-            spotifyModule.loginCallbackResolve = resolve;
-
-
+            
         } else {
-            RNSpotifyAuthController* authController = [[RNSpotifyAuthController alloc] initWithAuthWeb:_auth];
 
-            __weak RNSpotifyAuthController* weakAuthController = authController;
-            authController.completion = [RNSpotifyCompletion<NSNumber*> onReject:^(RNSpotifyError* error) {
-                // login failed
-                RNSpotifyAuthController* authController = weakAuthController;
-                [authController.presentingViewController dismissViewControllerAnimated:YES completion:^{
-                    _loggingIn = NO;
-                    [error reject:reject];
-                }];
-            } onResolve:^(NSNumber* authenticated) {
-                RNSpotifyAuthController* authController = weakAuthController;
-                if(!authenticated.boolValue)
-                {
-                    // login cancelled
-                    [authController.presentingViewController dismissViewControllerAnimated:YES completion:^{
-                        _loggingIn = NO;
-                        resolve(@NO);
-                    }];
-                }
-                else
-                {
-                    // login successful
-                    resolve(@YES);
-                }
-            }];
+            RNSpotifyAuthController* authController = [[RNSpotifyAuthController alloc] initWithAuthWeb:_auth];
             
             // present auth view controller
             UIViewController* topViewController = [RNSpotifyAuthController topViewController];

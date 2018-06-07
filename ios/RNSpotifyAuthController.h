@@ -17,7 +17,6 @@ typedef void(^RNSpotifyAuthCallback)(BOOL authenticated, NSError* error);
 -(id)initWithAuthWeb:(SPTAuth*)auth;
 -(id)initWithAuthApp:(SPTAuth*)auth;
 
--(void)clearCookies:(void(^)())completion;
 
 +(UIViewController*)topViewController;
 

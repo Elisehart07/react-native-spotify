@@ -79,67 +79,12 @@
 	return UIStatusBarStyleLightContent;
 }
 
--(void)clearCookies:(void(^)())completion
-{
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-		NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-		for (NSHTTPCookie *cookie in [storage cookies]) {
-			[storage deleteCookie:cookie];
-		}
-		[[NSUserDefaults standardUserDefaults] synchronize];
-		dispatch_async(dispatch_get_main_queue(), ^{
-			if(completion != nil)
-			{
-				completion();
-			}
-		});
-	});
-}
-
 -(void)didSelectCancelButton
 {
 	if(_completion != nil)
 	{
 		[_completion resolve:@NO];
 	}
-}
-
-+(NSDictionary*)decodeQueryString:(NSString*)queryString
-{
-	NSArray<NSString*>* parts = [queryString componentsSeparatedByString:@"&"];
-	NSMutableDictionary* params = [NSMutableDictionary dictionary];
-	for (NSString* part in parts)
-	{
-		NSString* escapedPart = [part stringByReplacingOccurrencesOfString:@"+" withString:@"%20"];
-		NSArray<NSString*>* expressionParts = [escapedPart componentsSeparatedByString:@"="];
-		if(expressionParts.count != 2)
-		{
-			continue;
-		}
-		NSString* key = [expressionParts[0] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-		NSString* value = [expressionParts[1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-		params[key] = value;
-	}
-	return params;
-}
-
-+(NSDictionary*)parseOAuthQueryParams:(NSURL*)url
-{
-	if(url == nil)
-	{
-		return [NSDictionary dictionary];
-	}
-	NSDictionary* queryParams = [self decodeQueryString:url.query];
-	if(queryParams != nil && queryParams.count > 0)
-	{
-		return queryParams;
-	}
-	NSDictionary* fragmentParams = [self decodeQueryString:url.fragment];
-	if(fragmentParams != nil && fragmentParams.count > 0)
-	{
-		return fragmentParams;
-	}
-	return [NSDictionary dictionary];
 }
 
 
@@ -154,25 +99,17 @@
 			if(session!=nil)
 			{
 				_auth.session = session;
+                spotifyModule.loginCallbackResolve(@YES);
 			}
 			
 			if(error == nil)
 			{
 				// success
-				if(_completion != nil)
-				{
-					[_completion resolve:@YES];
-				}
+				spotifyModule.loginCallbackResolve(@YES);
 			}
 			else
 			{
-				// error
-				// get actual oauth error if possible
-				NSDictionary* urlParams = [self.class parseOAuthQueryParams:request.URL];
-				if(_completion != nil)
-				{
-					[_completion reject:[RNSpotifyError errorWithCode:urlParams[@"error"] error:error]];
-				}
+				spotifyModule.loginCallbackResolve(@NO);
 			}
 		}];
 		return NO;
