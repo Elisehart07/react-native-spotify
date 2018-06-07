@@ -12,8 +12,6 @@
 {
 	BOOL _initialized;
 
-	BOOL _loggingIn;
-
 	SPTAuth* _auth;
 	
 	NSDictionary* _options;
@@ -55,7 +53,6 @@ static RNSpotify *sharedInstance = nil;
 	if(self = [super init])
 	{
 		_initialized = NO;
-		_loggingIn = NO;
 
 		_auth = nil;
 		
@@ -292,15 +289,6 @@ RCT_EXPORT_METHOD(isInitializedAsync:(RCTPromiseResolveBlock)resolve reject:(RCT
 
 RCT_EXPORT_METHOD(login:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
 {
-	// ensure we're not already logging in
-	if(_loggingIn)
-	{
-		[[RNSpotifyError errorWithCodeObj:RNSpotifyErrorCode.ConflictingCallbacks message:@"Cannot call login multiple times before completing"] reject:reject];
-		return;
-	}
-	_loggingIn = YES;   
-
-    RNSpotify *spotifyModule = (RNSpotify *)[RNSpotify sharedInstance];
 	// do UI logic on main thread
 	dispatch_async(dispatch_get_main_queue(), ^{    
         

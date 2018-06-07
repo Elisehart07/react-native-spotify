@@ -10,6 +10,8 @@
 #import "RNSpotifyWebViewController.h"
 #import "RNSpotifyProgressView.h"
 
+#import "RNSpotify.h"
+
 @interface RNSpotifyAuthController() <UIWebViewDelegate>
 {
 	SPTAuth* _auth;
@@ -81,10 +83,7 @@
 
 -(void)didSelectCancelButton
 {
-	if(_completion != nil)
-	{
-		[_completion resolve:@NO];
-	}
+    [[self topViewController] dismissViewControllerAnimated:YES completion:nil];
 }
 
 
@@ -92,6 +91,8 @@
 
 -(BOOL)webView:(UIWebView*)webView shouldStartLoadWithRequest:(NSURLRequest*)request navigationType:(UIWebViewNavigationType)navigationType
 {
+    RNSpotify *spotifyModule = (RNSpotify *) [RNSpotify sharedInstance];
+
 	if([_auth canHandleURL:request.URL])
 	{
 		[_progressView showInView:self.view animated:YES completion:nil];
@@ -99,7 +100,6 @@
 			if(session!=nil)
 			{
 				_auth.session = session;
-                spotifyModule.loginCallbackResolve(@YES);
 			}
 			
 			if(error == nil)
@@ -111,6 +111,8 @@
 			{
 				spotifyModule.loginCallbackResolve(@NO);
 			}
+
+            [[self topViewController] dismissViewControllerAnimated:YES completion:nil];
 		}];
 		return NO;
 	}
