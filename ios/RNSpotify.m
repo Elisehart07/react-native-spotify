@@ -60,7 +60,6 @@ static RNSpotify *sharedInstance = nil;
 		_auth = nil;
 		
 		_options = nil;
-		_cacheSize = nil;
 		
 		_renewingSession = NO;
 		_renewCallbacks = [NSMutableArray array];
@@ -380,3 +379,5 @@ RCT_EXPORT_METHOD(getAuthAsync:(RCTPromiseResolveBlock)resolve reject:(RCTPromis
 {
 	resolve([RNSpotifyConvert ID:[self getAuth]]);
 }
+
+@end
